@@ -4,8 +4,9 @@ import sys
 from forta_agent import get_json_rpc_url, Web3, Finding, FindingSeverity, FindingType
 from hexbytes import HexBytes
 from src.luabase import *
+from src.constants import *
+from src.utils import *
 
-ROLE_CHANGE_KEYWORDS = ['manage', 'role', 'admin', 'owner', 'set']
 
 #Initialize web3.
 web3 = Web3(Web3.HTTPProvider(get_json_rpc_url()))
@@ -43,13 +44,15 @@ def detect_role_change(w3, transaction_event):
     :return: detect_role_change: Finding
     """
     findings = []
+    chain_id = w3.eth.chain_id
+    network = CHAIN_LOOKUP[chain_id]
     
     if is_contract(w3, transaction_event.to):
         """
         Need to implement some error handling here for situations where Luabase doesn't have the abi.
         """
         try:
-            abi = get_abi_from_luabase(transaction_event.to)
+            abi = get_abi_from_luabase(transaction_event.to, network)
         except Exception as e:
             logging.info(f"Invalid response from Luabase: {e}")
             return findings
@@ -69,7 +72,7 @@ def detect_role_change(w3, transaction_event):
                     "type": FindingType.Suspicious,
                     "severity": FindingSeverity.Low,
                     "metadata": {
-                        "keywords": matching_keywords,
+                        "matching keywords": matching_keywords,
                         "function signature": str(transaction_data[0])[10:-1]
                     }
                 }

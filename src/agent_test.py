@@ -1,38 +1,98 @@
-from unittest.mock import Mock
-from forta_agent import FindingSeverity, FindingType, create_transaction_event
-from agent import handle_transaction, ERC20_TRANSFER_EVENT, TETHER_ADDRESS, TETHER_DECIMALS
+import agent
+from forta_agent import FindingSeverity, create_transaction_event
+from src.web3_mock import Web3Mock, NEW_EOA, OLD_EOA, NEW_CONTRACT
 
-mock_tx_event = create_transaction_event({})
-mock_tx_event.filter_log = Mock()
+w3 = Web3Mock()
+
+class TestChangeNowFundingAgent:
+
+    def test_transfer_to_contract(self):
+        agent.initialize()
+
+        tx_event = create_transaction_event({
+            'transaction': {
+                'hash': "0",
+                'to': NEW_CONTRACT,
+                'from': "0x077d360f11d220e4d5d831430c81c26c9be7c4a4",
+                'value': "1000000000000000000"
+            },
+            'block': {
+                'number': 1
+            },
+            'receipt': {
+                'logs': []
+            }
+        })
+
+        findings = agent.detect_changenow_funding(w3, tx_event)
+        assert len(findings) == 0, "This should have not triggered a finding as the to is a contract"
 
 
-class TestHighTetherTransferAgent:
-    def test_returns_empty_findings_if_no_tether_transfers(self):
-        mock_tx_event.filter_log.return_value = []
+    def test_not_transfer_from_changenow(self):
+        agent.initialize()
 
-        findings = handle_transaction(mock_tx_event)
+        tx_event = create_transaction_event({
+            'transaction': {
+                'hash': "0",
+                'to': NEW_EOA,
+                'from': OLD_EOA,
+                'value': "1000000000000000000"
+            },
+            'block': {
+                'number': 1
+            },
+            'receipt': {
+                'logs': []
+            }
+        })
 
-        assert len(findings) == 0
-        mock_tx_event.filter_log.assert_called_once_with(
-            ERC20_TRANSFER_EVENT, TETHER_ADDRESS)
+        findings = agent.detect_changenow_funding(w3, tx_event)
+        assert len(findings) == 0, "This should have not triggered a finding as the from is not Changenow"
 
-    def test_returns_finding_if_tether_transfer_over_10k(self):
-        mock_tx_event.filter_log.reset_mock()
-        amount = 20000
-        mock_transfer_event = {
-            'args': {'value': amount * 10**TETHER_DECIMALS, 'from': '0x123', 'to': '0xabc'}}
-        mock_tx_event.filter_log.return_value = [mock_transfer_event]
 
-        findings = handle_transaction(mock_tx_event)
+    def test_transfer_from_changenow_to_new_account(self):
+        agent.initialize()
 
-        assert len(findings) == 1
-        mock_tx_event.filter_log.assert_called_once_with(
-            ERC20_TRANSFER_EVENT, TETHER_ADDRESS)
-        finding = findings[0]
-        assert finding.name == "High Tether Transfer"
-        assert finding.description == f'High amount of USDT transferred: {mock_transfer_event["args"]["value"] / 10**TETHER_DECIMALS}'
-        assert finding.alert_id == "FORTA-1"
-        assert finding.severity == FindingSeverity.Low
-        assert finding.type == FindingType.Info
-        assert finding.metadata['to'] == mock_transfer_event['args']['to']
-        assert finding.metadata['from'] == mock_transfer_event['args']['from']
+        tx_event = create_transaction_event({
+            'transaction': {
+                'hash': "0",
+                'to': NEW_EOA,
+                'from': "0x077d360f11d220e4d5d831430c81c26c9be7c4a4",
+                'value': "100000000000000000"
+            },
+            'block': {
+                'number': 1
+            },
+            'receipt': {
+                'logs': []
+            }
+        })
+
+        findings = agent.detect_changenow_funding(w3, tx_event)
+        assert len(findings) == 1, "This should have triggered a finding"
+        assert findings[0].alert_id == "FUNDING-CHANGENOW-NEW-ACCOUNT", "This is a tx from Changenow to a new account"
+        assert findings[0].severity == FindingSeverity.Low, "Severity should be low"
+
+
+    def test_low_value_transfer_from_changenow(self):
+        agent.initialize()
+
+        tx_event = create_transaction_event({
+            'transaction': {
+                'hash': "0",
+                'to': OLD_EOA,
+                'from': "0x077d360f11d220e4d5d831430c81c26c9be7c4a4",
+                'value': "300000000000000000"
+            },
+            'block': {
+                'number': 1
+            },
+            'receipt': {
+                'logs': []
+            }
+        })
+
+        findings = agent.detect_changenow_funding(w3, tx_event)
+        assert len(findings) == 1, "This should have triggered a finding"
+        assert findings[0].alert_id == "FUNDING-CHANGENOW-LOW-AMOUNT", "This is a high value transfer from Changenow"
+        assert findings[0].severity == FindingSeverity.Low, "Severity should be low"
