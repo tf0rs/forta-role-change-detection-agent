@@ -5,9 +5,14 @@ NEW_EOA = '0x49A9deCA3DcA86aB3A029C2ed629EC8477009Fee'
 OLD_EOA = '0x4e5b2E1Dc63f6B91cb6cD759936495434c7E0000'
 NEW_CONTRACT = '0x2320A28f52334d62622cc2EaFa15DE55F9987eD0'
 
+MOCK_TX_HASH_TO_INPUT_MAPPING = {
+    "0x30a332902920cb6886281f6d28abfa5775559647eb7288e7cc00763fe4427f7b": "0x124cc077",
+    "0x8fc91a50a2614d323864655c2473ec19e58cb356a9f1d391888c472476c749f7": "0xa9059cbb"
+}
 
-MOCK_FUNCTION_MAPPING = {
-    "test_input": "decoded_input"
+MOCK_TX_INPUT_TO_DECODED_INPUT_MAPPING = {
+    "0x124cc077": "(<Function setMetadataManager(address)>, {'newMetadataManager': '0x5C95123b1c8d9D8639197C81a829793B469A9f32'})",
+    "0xa9059cbb" : "(<Function transfer(address,uint256)>, {'_to': '0x28C6c06298d514Db089934071355E5743bf21d60', '_value': 1000000000000000000})"
 }
 
 
@@ -18,7 +23,7 @@ class Web3Mock:
 
 class EthMock:
     def __init__(self):
-        self.contract = ContractMock()
+        self.contract = ContractMock(address=None, abi=None)
 
     chain_id = 1
 
@@ -33,19 +38,24 @@ class EthMock:
         return HexBytes('0x')
 
     def get_transaction(self, transaction_hash):
-        
-        return None
+        transaction = TransactionMock(MOCK_TX_HASH_TO_INPUT_MAPPING[transaction_hash])
+        return transaction
+
+
+class TransactionMock:
+    def __init__(self, data):
+        self.input = data
 
 
 class ContractMock:
-    def __init__(self):
+    def __init__(self, address, abi):
         self.functions = FunctionsMock()
 
     def __call__(self, address, *args, **kwargs):
         return self
 
     def decode_function_input(self, transaction_input):
-        return MOCK_FUNCTION_MAPPING[transaction_input]
+        return MOCK_TX_INPUT_TO_DECODED_INPUT_MAPPING[transaction_input]
 
 
 class FunctionsMock:

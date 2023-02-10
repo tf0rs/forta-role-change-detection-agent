@@ -3,13 +3,16 @@ import sys
 
 from forta_agent import get_json_rpc_url, Web3, Finding, FindingSeverity, FindingType
 from hexbytes import HexBytes
-from src.luabase import *
+from src.references import *
 from src.constants import *
-from src.utils import *
+from src.blockexplorer import *
 
 
-#Initialize web3.
+# Initialize web3
 web3 = Web3(Web3.HTTPProvider(get_json_rpc_url()))
+
+# Replace with blockexplorer instance
+blockexplorer = BlockExplorer(web3.eth.chain_id)
 
 # Logging set up.
 root = logging.getLogger()
@@ -20,11 +23,19 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 handler.setFormatter(formatter)
 root.addHandler(handler)
 
+DENOMINATOR_COUNT = 0
+ALERT_COUNT = 0
+
 
 def initialize():
     """
     initialize for test cases
     """
+    global DENOMINATOR_COUNT
+    DENOMINATOR_COUNT = 0
+
+    global ALERT_COUNT
+    ALERT_COUNT = 0
 
 
 def is_contract(w3, address):
@@ -38,27 +49,32 @@ def is_contract(w3, address):
     return code != HexBytes('0x')
 
 
-def detect_role_change(w3, transaction_event):
+def detect_role_change(w3, blockexplorer, transaction_event):
     """
     search transaction input when to is a contract for key words indicating a function call triggering a role change
     :return: detect_role_change: Finding
     """
+    global DENOMINATOR_COUNT
+    global ALERT_COUNT
+
     findings = []
     chain_id = w3.eth.chain_id
     network = CHAIN_LOOKUP[chain_id]
     
     if is_contract(w3, transaction_event.to):
-        """
-        Need to implement some error handling here for situations where Luabase doesn't have the abi.
-        """
         try:
-            abi = get_abi_from_luabase(transaction_event.to, network)
-        except Exception as e:
-            logging.info(f"Invalid response from Luabase: {e}")
+            logging.info("Retrieving ABI from block explorer...")
+            abi = blockexplorer.get_abi(transaction_event.to, network)
+            logging.info("Successfully retrieved ABI from block explorer")
+        except Exception:
+            logging.warn("Failed to retrieve ABI from block explorer")
             return findings
+        logging.info("Creating contract instance...")
         contract = w3.eth.contract(address=Web3.toChecksumAddress(transaction_event.to), abi=abi)
+        logging.info("Successfully created contract instance")
         transaction = w3.eth.get_transaction(transaction_event.hash)
         transaction_data = contract.decode_function_input(transaction.input)
+        logging.info(f"Decoded input: {transaction_data}")
         matching_keywords = []
         for keyword in ROLE_CHANGE_KEYWORDS:
             if keyword in str(transaction_data).lower():
@@ -81,14 +97,14 @@ def detect_role_change(w3, transaction_event):
     return findings
 
 
-def provide_handle_transaction(w3):
+def provide_handle_transaction(w3, blockexplorer):
     def handle_transaction(transaction_event):
-        return detect_role_change(w3, transaction_event)
+        return detect_role_change(w3, blockexplorer, transaction_event)
 
     return handle_transaction
 
 
-real_handle_transaction = provide_handle_transaction(web3)
+real_handle_transaction = provide_handle_transaction(web3, blockexplorer)
 
 
 def handle_transaction(transaction_event):
