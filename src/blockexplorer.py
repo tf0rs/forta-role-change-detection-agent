@@ -33,18 +33,13 @@ class BlockExplorer:
             self.api_key = AVALANCHE_API_KEY
 
 
-    def is_verified(self, address):
+    def get_abi(self, address):
         url = self.host + "/api?module=contract&action=getabi&address=" + address + "&apikey=" + self.api_key
         response = requests.get(url)
         if (response.status_code == 200):
-            data = json.loads(response.text)
-            if data['status'] == '1':
-                return True
+            data = response.json()
+            abi = data['result']
+            return abi
         else:
             logging.warn("Unable to check if contract is verified. Etherscan returned status code " + str(response.status_code))
-
-        return False
-
-
-    def get_abi(self, address):
-        pass
+            pass

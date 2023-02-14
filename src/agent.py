@@ -64,20 +64,19 @@ def detect_role_change(w3, blockexplorer, transaction_event):
     if is_contract(w3, transaction_event.to):
         try:
             logging.info("Retrieving ABI from block explorer...")
-            abi = blockexplorer.get_abi(transaction_event.to, network)
+            abi = blockexplorer.get_abi(transaction_event.to)
             logging.info("Successfully retrieved ABI from block explorer")
         except Exception:
             logging.warn("Failed to retrieve ABI from block explorer")
             return findings
         logging.info("Creating contract instance...")
         contract = w3.eth.contract(address=Web3.toChecksumAddress(transaction_event.to), abi=abi)
-        logging.info("Successfully created contract instance")
         transaction = w3.eth.get_transaction(transaction_event.hash)
         transaction_data = contract.decode_function_input(transaction.input)
-        logging.info(f"Decoded input: {transaction_data}")
         matching_keywords = []
         for keyword in ROLE_CHANGE_KEYWORDS:
             if keyword in str(transaction_data).lower():
+                logging.info(f"Keyword found -> {keyword}")
                 matching_keywords.append(keyword)
         if len(matching_keywords) > 0:
             findings.append(Finding(
