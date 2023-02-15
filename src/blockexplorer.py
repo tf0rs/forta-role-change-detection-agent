@@ -38,8 +38,9 @@ class BlockExplorer:
         response = requests.get(url)
         if (response.status_code == 200):
             data = response.json()
-            abi = data['result']
-            return abi
+            if data['status'] == '1':
+                abi = data['result']
+                return abi
         else:
-            logging.warn("Unable to check if contract is verified. Etherscan returned status code " + str(response.status_code))
+            logging.warn("Unable to retrieve ABI. Etherscan returned status code " + str(response.status_code))
             pass

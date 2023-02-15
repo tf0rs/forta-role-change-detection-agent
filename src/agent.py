@@ -1,7 +1,7 @@
 import logging
 import sys
 
-from forta_agent import get_json_rpc_url, Web3, Finding, FindingSeverity, FindingType
+from forta_agent import get_json_rpc_url, Web3, Finding, FindingSeverity, FindingType, EntityType
 from hexbytes import HexBytes
 from src.references import *
 from src.constants import *
@@ -25,7 +25,6 @@ root.addHandler(handler)
 
 DENOMINATOR_COUNT = 0
 ALERT_COUNT = 0
-
 
 def initialize():
     """
@@ -58,19 +57,25 @@ def detect_role_change(w3, blockexplorer, transaction_event):
     global ALERT_COUNT
 
     findings = []
-    chain_id = w3.eth.chain_id
-    network = CHAIN_LOOKUP[chain_id]
     
     if is_contract(w3, transaction_event.to):
+        DENOMINATOR_COUNT += 1
         try:
             logging.info("Retrieving ABI from block explorer...")
             abi = blockexplorer.get_abi(transaction_event.to)
+            if abi == None:
+                logging.warn(f"Unable to retrieve ABI for {transaction_event.to}")
+                return findings
             logging.info("Successfully retrieved ABI from block explorer")
         except Exception:
             logging.warn("Failed to retrieve ABI from block explorer")
             return findings
+        logging.info(f"Chain ID: {w3.eth.chain_id}")
+        logging.info(f"Host: {blockexplorer.host}")
+        logging.info(f"ABI: {abi}")
         logging.info("Creating contract instance...")
         contract = w3.eth.contract(address=Web3.toChecksumAddress(transaction_event.to), abi=abi)
+        logging.info("Successfully created contract instance")
         transaction = w3.eth.get_transaction(transaction_event.hash)
         transaction_data = contract.decode_function_input(transaction.input)
         matching_keywords = []
@@ -79,17 +84,39 @@ def detect_role_change(w3, blockexplorer, transaction_event):
                 logging.info(f"Keyword found -> {keyword}")
                 matching_keywords.append(keyword)
         if len(matching_keywords) > 0:
+            ALERT_COUNT += 1
             findings.append(Finding(
                 {
                     "name": "Possible Role Change",
-                    "description": f"Possible role change affecting {transaction_event.transaction.to}",
+                    "description": f"Possible role change affecting {transaction_event.to}",
                     "alert_id": "ROLE-CHANGE-1",
                     "type": FindingType.Suspicious,
                     "severity": FindingSeverity.Low,
                     "metadata": {
                         "matching keywords": matching_keywords,
-                        "function signature": str(transaction_data[0])[10:-1]
-                    }
+                        "function signature": str(transaction_data[0])[10:-1],
+                        "anomaly_score": (1.0 * ALERT_COUNT) / DENOMINATOR_COUNT
+                    },
+                    "labels": [
+                        {
+                            "entity_type": EntityType.Address,
+                            "entity": transaction_event.to,
+                            "label": "victim",
+                            "confidence": 0.7
+                        },
+                        {
+                            "entity_type": EntityType.Address,
+                            "entity": transaction_event.from_,
+                            "label": "attacker",
+                            "confidence": 0.3
+                        },
+                        {
+                            "entity_type": EntityType.Transaction,
+                            "entity": transaction_event.transaction.hash,
+                            "label": "role-transfer",
+                            "confidence": 0.7
+                        },
+                    ]
                 }
             ))
 

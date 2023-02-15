@@ -1,12 +1,9 @@
-class BlockExplorerMock:
+from web3_mock import VERIFIED_CONTRACT, NEW_EOA
 
+class BlockExplorerMock:
     def __init__(self, chain_id):
         pass
+    
 
-    def is_verified(self, address):
-        if address == 'VERIFIED_CONTRACT':
-            return True
-        elif address == 'UNVERIFIED_CONTRACT':
-            return False
-        else:
-            return False
+    def get_abi(self, address):
+        return '[{MOCK_ABI: PLACEHOLDER}]'
