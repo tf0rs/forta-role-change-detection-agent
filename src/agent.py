@@ -28,7 +28,7 @@ ALERT_COUNT = 0
 
 def initialize():
     """
-    initialize for test cases
+    Initialize variables for anomaly score.
     """
     global DENOMINATOR_COUNT
     DENOMINATOR_COUNT = 0
@@ -68,16 +68,18 @@ def detect_role_change(w3, blockexplorer, transaction_event):
                 return findings
             logging.info("Successfully retrieved ABI from block explorer")
         except Exception:
-            logging.warn("Failed to retrieve ABI from block explorer")
+            logging.warn(f"Unable to retrieve ABI for {transaction_event.to}")
             return findings
-        logging.info(f"Chain ID: {w3.eth.chain_id}")
-        logging.info(f"Host: {blockexplorer.host}")
-        logging.info(f"ABI: {abi}")
         logging.info("Creating contract instance...")
         contract = w3.eth.contract(address=Web3.toChecksumAddress(transaction_event.to), abi=abi)
         logging.info("Successfully created contract instance")
         transaction = w3.eth.get_transaction(transaction_event.hash)
-        transaction_data = contract.decode_function_input(transaction.input)
+        try:
+            transaction_data = contract.decode_function_input(transaction.input)
+            logging.info(f"Decoded function call: {str(transaction_data[0])[10:-1]}")
+        except Exception as e:
+            logging.warn(f"Failed to decode tx input: {e}")
+            return findings
         matching_keywords = []
         for keyword in ROLE_CHANGE_KEYWORDS:
             if keyword in str(transaction_data).lower():
@@ -91,7 +93,7 @@ def detect_role_change(w3, blockexplorer, transaction_event):
                     "description": f"Possible role change affecting {transaction_event.to}",
                     "alert_id": "ROLE-CHANGE-1",
                     "type": FindingType.Suspicious,
-                    "severity": FindingSeverity.Low,
+                    "severity": FindingSeverity.Medium,
                     "metadata": {
                         "matching keywords": matching_keywords,
                         "function signature": str(transaction_data[0])[10:-1],
@@ -102,7 +104,7 @@ def detect_role_change(w3, blockexplorer, transaction_event):
                             "entity_type": EntityType.Address,
                             "entity": transaction_event.to,
                             "label": "victim",
-                            "confidence": 0.7
+                            "confidence": 0.3
                         },
                         {
                             "entity_type": EntityType.Address,
@@ -114,10 +116,10 @@ def detect_role_change(w3, blockexplorer, transaction_event):
                             "entity_type": EntityType.Transaction,
                             "entity": transaction_event.transaction.hash,
                             "label": "role-transfer",
-                            "confidence": 0.7
+                            "confidence": 0.3
                         },
                     ]
-                }
+                }  
             ))
 
     return findings

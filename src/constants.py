@@ -2,8 +2,10 @@ ROLE_CHANGE_KEYWORDS = [
     'manage', 
     'role', 
     'admin', 
-    'owner', 
-    'set'
+    'own',
+    'root',
+    'user',
+    'member'
 ]
 
 CHAIN_LOOKUP = {

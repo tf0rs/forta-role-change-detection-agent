@@ -9,6 +9,10 @@ This agent detects transactions triggering role changes in smart contracts.
 - Ethereum
 - Binance Smart Chain
 - Polygon
+- Arbitrum
+- Optimism
+- Fantom
+- Avalanche
 
 ## Alerts
 
@@ -16,9 +20,9 @@ Describe each of the type of alerts fired by this agent
 
 - ROLE-CHANGE-1
   - Fired when a transaction to a contract invokes a function call that appears to trigger a role change
-  - Severity is always set to "low"
-  - Type is always set to "info"s
-  - Metadata includes the key words used to trigger the alert, as well as the function call invoked in the transaction
+  - Severity is always set to "medium"
+  - Type is always set to "suspicious"
+  - Metadata includes the key words used to trigger the alert, as well as the function call invoked in the transaction, and anomaly score
 
 ## Test Data
 
