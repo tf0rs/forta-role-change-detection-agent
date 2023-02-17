@@ -1,8 +1,8 @@
 {
-  "name": "forta-agent-starter",
+  "name": "forta-role-change-detection",
   "version": "0.0.1",
-  "description": "Forta Agent Python starter project",
-  "repository": "https://github.com/forta-network/forta-bot-sdk/tree/master/starter-project",
+  "description": "Detecting role changes in smart contracts",
+  "repository": "https://github.com/tf0rs/forta-role-change-detection-agent",
   "chainIds": [
     1, 56, 137, 42161, 10, 43114
   ],
