@@ -91,7 +91,7 @@ def detect_role_change(w3, blockexplorer, transaction_event):
                 {
                     "name": "Possible Role Change",
                     "description": f"Possible role change affecting {transaction_event.to}",
-                    "alert_id": "ROLE-CHANGE-1",
+                    "alert_id": "ROLE-CHANGE",
                     "type": FindingType.Suspicious,
                     "severity": FindingSeverity.Medium,
                     "metadata": {

@@ -18,7 +18,7 @@ This agent detects transactions triggering role changes in smart contracts.
 
 Describe each of the type of alerts fired by this agent
 
-- ROLE-CHANGE-1
+- ROLE-CHANGE
   - Fired when a transaction to a contract invokes a function call that appears to trigger a role change
   - Severity is always set to "medium"
   - Type is always set to "suspicious"
