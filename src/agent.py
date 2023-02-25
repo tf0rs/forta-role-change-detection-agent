@@ -116,7 +116,7 @@ def detect_role_change(w3, blockexplorer, transaction_event):
                             "entity_type": EntityType.Transaction,
                             "entity": transaction_event.transaction.hash,
                             "label": "role-transfer",
-                            "confidence": 0.3
+                            "confidence": 0.7
                         },
                     ]
                 }  
