@@ -7,8 +7,3 @@ ROLE_CHANGE_KEYWORDS = [
     'user',
     'member'
 ]
-
-CHAIN_LOOKUP = {
-    1: "ethereum",
-    137: "polygon"
-}
