@@ -76,13 +76,14 @@ def detect_role_change(w3, blockexplorer, transaction_event):
         transaction = w3.eth.get_transaction(transaction_event.hash)
         try:
             transaction_data = contract.decode_function_input(transaction.input)
-            logging.info(f"Decoded function call: {str(transaction_data[0])[10:-1]}")
+            function_call = str(transaction_data[0])[10:-1]
+            logging.info(f"Decoded function call: {function_call}")
         except Exception as e:
             logging.warn(f"Failed to decode tx input: {e}")
             return findings
         matching_keywords = []
         for keyword in ROLE_CHANGE_KEYWORDS:
-            if keyword in str(transaction_data).lower():
+            if keyword in function_call.lower():
                 logging.info(f"Keyword found -> {keyword}")
                 matching_keywords.append(keyword)
         if len(matching_keywords) > 0:
