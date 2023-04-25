@@ -4,7 +4,7 @@ ROLE_CHANGE_KEYWORDS = [
     'role', 
     'admin', 
     'own',
-    'root',
+    # 'root',
     # 'user',
     'member'
 ]
