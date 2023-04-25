@@ -11,8 +11,8 @@ MOCK_TX_HASH_TO_INPUT_MAPPING = {
 }
 
 MOCK_TX_INPUT_TO_DECODED_INPUT_MAPPING = {
-    "0x124cc077": "(<Function setMetadataManager(address)>, {'newMetadataManager': '0x5C95123b1c8d9D8639197C81a829793B469A9f32'})",
-    "0xa9059cbb" : "(<Function transfer(address,uint256)>, {'_to': '0x28C6c06298d514Db089934071355E5743bf21d60', '_value': 1000000000000000000})"
+    "0x124cc077": ["(<Function setMetadataManager(address)>, {'newMetadataManager': '0x5C95123b1c8d9D8639197C81a829793B469A9f32'})"],
+    "0xa9059cbb" : ["(<Function transfer(address,uint256)>, {'_to': '0x28C6c06298d514Db089934071355E5743bf21d60', '_value': 1000000000000000000})"]
 }
 
 
@@ -55,6 +55,8 @@ class ContractMock:
         return self
 
     def decode_function_input(self, transaction_input):
+        print(transaction_input)
+        print(MOCK_TX_INPUT_TO_DECODED_INPUT_MAPPING[transaction_input])
         return MOCK_TX_INPUT_TO_DECODED_INPUT_MAPPING[transaction_input]
 
 
