@@ -1,6 +1,6 @@
 {
   "name": "forta-role-change-detection",
-  "version": "0.0.2",
+  "version": "0.1.1",
   "description": "Detecting role changes in smart contracts",
   "repository": "https://github.com/tf0rs/forta-role-change-detection-agent",
   "chainIds": [
@@ -8,19 +8,19 @@
   ],
   "chainSettings": {
     "1": {
-      "shards": 8,
+      "shards": 18,
       "target": 3
     },
     "137": {
-      "shards": 10,
+      "shards": 28,
       "target": 3
     },
     "56": {
-      "shards": 8,
+      "shards": 24,
       "target": 3
     },
     "default": {
-      "shards": 3,
+      "shards": 8,
       "target": 3
     }
   },
