@@ -1,6 +1,6 @@
 {
   "name": "forta-role-change-detection",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Detecting role changes in smart contracts",
   "repository": "https://github.com/tf0rs/forta-role-change-detection-agent",
   "chainIds": [
@@ -45,7 +45,7 @@
     "test": "python3 -m pytest"
   },
   "dependencies": {
-    "forta-agent": "^0.1.18"
+    "forta-agent": "^0.1.33"
   },
   "devDependencies": {
     "nodemon": "^2.0.8"
